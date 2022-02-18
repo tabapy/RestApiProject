@@ -1,5 +1,5 @@
 from datetime import timedelta
-
+from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import generics, viewsets, status
@@ -9,7 +9,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from main.models import Category, PostImage, Post
+from .models import Theme, PostImage, Post
 from main.permissions import IsPostAuthor
 from .serializers import *
 
@@ -24,9 +24,39 @@ class MyPaginationClass(PageNumberPagination):
         return super().get_paginated_response(data)
 
 
-class CategoryListView(generics.ListAPIView):
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
+class ThemeListView(generics.ListAPIView):
+    queryset = Theme.objects.all()
+    serializer_class = ThemeSerializer
+    permission_classes = [AllowAny, ]
+
+
+class ThemesPageListView(generics.ListAPIView):
+    model = Post
+    serializer_class = ThemesPageSerializer
+    queryset = Post.objects.all()
+    context_object_name = 'post'
+    paginate_by = 3
+
+    def get_queryset(self):
+        queryset = super().get_queryset()  # all
+        slug = self.kwargs.get('slug')
+        filter_word = self.request.GET.get('filter')
+        if filter_word:
+            queryset = queryset.filter(theme__slug=slug,
+                                       status=filter_word)
+        else:
+            queryset = queryset.filter(theme__slug=slug)
+        return queryset
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super(ThemesPageListView, self).get_context_data()
+        context['slug'] = self.kwargs.get('slug')
+        return
+
+
+class PostsListView(generics.ListAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostsSerializer
     permission_classes = [AllowAny, ]
 
 
@@ -39,7 +69,7 @@ class PostsViewSet(viewsets.ModelViewSet):
     def get_serializer_context(self):
         return {'request': self.request}
 
-    def get_permissions(self):  #переопределим метод
+    def get_permissions(self):
         print(self.action)
         if self.action in ['update', 'partial_update', 'destroy']:
             permissions = [IsPostAuthor, ]
@@ -108,7 +138,6 @@ class CommentViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated, ]
 
 
-
 class RatingViewSet(ModelViewSet):
     queryset = Rating.objects.all()
     serializer_class = RatingSerializer
@@ -118,4 +147,10 @@ class RatingViewSet(ModelViewSet):
 class LikesViewSet(ModelViewSet):
     queryset = Likes.objects.all()
     serializer_class = LikesSerializer
+    permission_classes = [IsAuthenticated, ]
+
+
+class FavoriteViewSet(ModelViewSet):
+    queryset = Favorite.objects.all()
+    serializer_class = FavoriteSerializer
     permission_classes = [IsAuthenticated, ]

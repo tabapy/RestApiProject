@@ -13,4 +13,4 @@ class PostAdmin(admin.ModelAdmin):
     inlines = [PostImageInline, ]
 
 
-admin.site.register(Category)
+admin.site.register(Theme)

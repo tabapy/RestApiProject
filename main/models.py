@@ -2,9 +2,10 @@ from django.db import models
 from account.models import MyUser
 
 
-class Category(models.Model):
+class Theme(models.Model):
     slug = models.SlugField(max_length=100, primary_key=True)
     name = models.CharField(max_length=100, unique=True)
+    objects = models.Manager()
 
     def __str__(self):
         return self.name
@@ -12,7 +13,7 @@ class Category(models.Model):
 
 class Post(models.Model):
     author = models.ForeignKey(MyUser, on_delete=models.CASCADE, related_name='posts')
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='posts')
+    theme = models.ForeignKey(Theme, on_delete=models.CASCADE, related_name='posts')
     title = models.CharField(max_length=200)
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -28,11 +29,11 @@ class PostImage(models.Model):
 
 class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
-    body = models.TextField()
+    text = models.TextField()
     author = models.ForeignKey(MyUser, on_delete=models.CASCADE, related_name='comments')
 
     def __str__(self):
-        return f'{self.author}:{self.body}'
+        return f'{self.author}:{self.text}'
 
 
 class Likes(models.Model):
@@ -55,9 +56,8 @@ RATING_CHOICES = (
 
 class Rating(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='rating')
-    author = models.ForeignKey(MyUser, on_delete=models.CASCADE, related_name='rating')
-    text = models.TextField()
-    rating = models.IntegerField(choices=RATING_CHOICES)
+    author = models.ForeignKey(MyUser, on_delete=models.CASCADE, related_name='rating', null=True)
+    rating = models.PositiveIntegerField(choices=RATING_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -67,5 +67,5 @@ class Rating(models.Model):
 
 class Favorite(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='favourites')
-    user = models.ForeignKey(MyUser, on_delete=models.CASCADE, related_name='favourites')
+    author = models.ForeignKey(MyUser, on_delete=models.CASCADE, related_name='favourites')
     favorite = models.BooleanField(default=True)

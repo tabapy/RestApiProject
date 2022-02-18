@@ -54,7 +54,7 @@ class MyUser(AbstractUser):
 
     def send_activation_code(self):
         print(self.activation_code, '12345678976543456')
-        activation_url = f'http://localhost:8000/v1/api/account/activate/{self.activation_code}/'
+        activation_url = f'http://localhost:5000/v1/api/account/activate/{self.activation_code}/'
         message = f""" 
             Thank you for signing up.
             Please, activate your account.

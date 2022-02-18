@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'django_rest_passwordreset',
     'rest_framework',
     'drf_yasg',
+    'django_filters',
 
     'account',
     'main',
@@ -123,7 +124,10 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 4
+    'PAGE_SIZE': 4,
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+    )
 }
 
 CELERY_BROKER_URL = 'redis://localhost:6379'
