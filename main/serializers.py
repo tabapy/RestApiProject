@@ -94,18 +94,6 @@ class CommentSerializer(serializers.ModelSerializer):
         return comment
 
 
-class FavoriteSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Favorite
-        fields = '__all__'
-
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['email'] = instance.user.email
-        representation['post'] = instance.post.title
-        return representation
-
 
 class LikesSerializer(serializers.ModelSerializer):
 
@@ -126,13 +114,11 @@ class LikesSerializer(serializers.ModelSerializer):
 
 
 class RatingSerializer(serializers.ModelSerializer):
-
     post_title = serializers.SerializerMethodField("get_post_title")
 
     class Meta:
         model = Rating
-        exclude = ('author', 'post', )
-
+        exclude = ('author',)
 
     def get_post_title(self, rating):
         title = rating.post.title
@@ -151,4 +137,15 @@ class RatingSerializer(serializers.ModelSerializer):
         if not request.user.is_anonymous:
             representation['author'] = request.user.email
 
+        return representation
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Favorite
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['post'] = instance.post.title
         return representation

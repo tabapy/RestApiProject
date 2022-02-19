@@ -45,27 +45,20 @@ class Likes(models.Model):
         return str(self.likes)
 
 
-RATING_CHOICES = (
-    (1, '1'),
-    (2, '2'),
-    (3, '3'),
-    (4, '4'),
-    (5, '5'),
-)
-
-
 class Rating(models.Model):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='rating')
-    author = models.ForeignKey(MyUser, on_delete=models.CASCADE, related_name='rating', null=True)
-    rating = models.PositiveIntegerField(choices=RATING_CHOICES)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return str(self.rating)
+    post = models.ForeignKey(
+        Post, on_delete=models.CASCADE,
+        related_name='rating'
+    )
+    author = models.ForeignKey(
+        'account.MyUser', on_delete=models.CASCADE,
+        related_name='rating', null=True
+    )
+    rating = models.PositiveIntegerField()
 
 
 class Favorite(models.Model):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='favourites')
-    author = models.ForeignKey(MyUser, on_delete=models.CASCADE, related_name='favourites')
+    user = models.ForeignKey('account.MyUser', on_delete=models.CASCADE, related_name='favorites')
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='favorites')
     favorite = models.BooleanField(default=True)
+

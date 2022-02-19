@@ -65,6 +65,7 @@ class PostsViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticated, ]
     pagination_class = MyPaginationClass
+    queryset_any = Favorite.objects.all()
 
     def get_serializer_context(self):
         return {'request': self.request}
@@ -108,17 +109,16 @@ class PostsViewSet(viewsets.ModelViewSet):
         serializer = FavoriteSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
-    def favorite(self, request, pk=None):
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def add_favorites(self, request, pk=None):
         post = self.get_object()
         obj, created = Favorite.objects.get_or_create(user=request.user, post=post, )
         if not created:
             obj.favorite = not obj.favorite
             obj.save()
-        favorites = 'added to favorites' if obj.favorite \
-            else 'discard from favorites'
+        favorites = 'added to favorites' if obj.favorite else 'removed to favorites'
 
-        return Response(f'Successfully {favorites}', status=status.HTTP_200_OK)
+        return Response('Successfully {} !'.format(favorites), status=status.HTTP_200_OK)
 
     def get_serializer_context(self):
         return {'request': self.request, 'action': self.action}
@@ -138,10 +138,29 @@ class CommentViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated, ]
 
 
-class RatingViewSet(ModelViewSet):
+class PermissionMixin:
+
+    def get_permissions(self):
+        print(self.action)
+        if self.action in ['update', 'partial_update', 'destroy']:
+            permissions = [IsPostAuthor, ]
+        else:
+            permissions = [IsAuthenticated]
+        return [permission() for permission in permissions]
+
+
+class RatingViewSet(PermissionMixin, ModelViewSet):
     queryset = Rating.objects.all()
     serializer_class = RatingSerializer
-    permission_classes = [IsAuthenticated, ]
+
+    def get_serializer_context(self):
+        return {
+            'request': self.request
+        }
+
+    def get_serializer(self, *args, **kwargs):
+        kwargs['context'] = self.get_serializer_context()
+        return self.serializer_class(*args, **kwargs)
 
 
 class LikesViewSet(ModelViewSet):
@@ -154,3 +173,21 @@ class FavoriteViewSet(ModelViewSet):
     queryset = Favorite.objects.all()
     serializer_class = FavoriteSerializer
     permission_classes = [IsAuthenticated, ]
+
+    @action(detail=False, methods=['get'])
+    def favorites(self, request):
+        queryset = Favorite.objects.all()
+        queryset = queryset.filter(user=request.user)
+        serializer = FavoriteSerializer(queryset, many=True, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def add_favorites(self, request, pk=None):
+        post = self.get_object()
+        obj, created = Favorite.objects.get_or_create(user=request.user, post=post, )
+        if not created:
+            obj.favorite = not obj.favorite
+            obj.save()
+        favorites = 'added to favorites' if obj.favorite else 'removed to favorites'
+
+        return Response('Successfully {} !'.format(favorites), status=status.HTTP_200_OK)
